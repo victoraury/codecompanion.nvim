@@ -56,7 +56,8 @@ return {
     ---@param messages table Format is: { { role = "user", content = "Your prompt here" } }
     ---@return table
     form_messages = function(self, messages)
-      messages = adapter_utils.merge_messages(messages)
+      -- messages = adapter_utils.merge_messages(messages)
+      messages = adapter_utils.merge_messages(messages, { "tools", "reasoning" })
       messages = adapter_utils.merge_system_messages(messages)
 
       local adapter = self
@@ -104,6 +105,16 @@ return {
       return { messages = messages }
     end,
 
+    form_reasoning = function(self, data)
+      local content = vim
+        .iter(data)
+        :map(function(item)
+          return item.content
+        end)
+        :join("")
+      return { content = content }
+    end,
+
     ---Output the data from the API ready for insertion into the chat buffer
     ---@param self CodeCompanion.HTTPAdapter
     ---@param data table The streamed JSON data from the API, also formatted by the format_data handler
@@ -114,7 +125,8 @@ return {
     end,
     parse_message_meta = function(self, data)
       local extra = data.extra
-      if extra.reasoning_content then
+      -- if extra.reasoning_content then
+      if extra.reasoning_content and extra.reasoning_content ~= "" then
         data.output.reasoning = { content = extra.reasoning_content }
         if data.output.content == "" then
           data.output.content = nil
